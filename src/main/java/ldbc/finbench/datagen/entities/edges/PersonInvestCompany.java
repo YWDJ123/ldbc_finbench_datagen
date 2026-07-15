@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.Random;
 import ldbc.finbench.datagen.entities.DynamicActivity;
 import ldbc.finbench.datagen.entities.nodes.Company;
+import ldbc.finbench.datagen.entities.nodes.InvestorInfo;
 import ldbc.finbench.datagen.entities.nodes.Person;
 import ldbc.finbench.datagen.generation.dictionary.Dictionaries;
 import ldbc.finbench.datagen.util.RandomGeneratorFarm;
@@ -56,6 +57,32 @@ public class PersonInvestCompany implements DynamicActivity, Serializable {
         PersonInvestCompany personInvestCompany = new PersonInvestCompany(investor, target, creationDate, 0, ratio,
                                                                           false, comment);
         target.getPersonInvestCompanies().add(personInvestCompany);
+    }
+
+    // Lightweight overload accepting InvestorInfo instead of full Person object
+    public static void createPersonInvestCompany(RandomGeneratorFarm farm, InvestorInfo investor,
+                                                 Company target) {
+        Random dateRandom = farm.get(RandomGeneratorFarm.Aspect.PERSON_INVEST_DATE);
+        long creationDate = Dictionaries.dates.randomPersonToCompanyDate(dateRandom, investor, target);
+        double ratio = farm.get(RandomGeneratorFarm.Aspect.INVEST_RATIO).nextDouble();
+        String comment =
+            Dictionaries.randomTexts.getUniformDistRandomTextForComments(
+                farm.get(RandomGeneratorFarm.Aspect.COMMON_COMMENT));
+        PersonInvestCompany personInvestCompany =
+            new PersonInvestCompany(investor.getId(), target.getCompanyId(), creationDate, 0, ratio, false, comment);
+        target.getPersonInvestCompanies().add(personInvestCompany);
+    }
+
+    // Constructor accepting primitive ids (used by lightweight overload)
+    private PersonInvestCompany(long personId, long companyId, long creationDate, long deletionDate,
+                                double ratio, boolean isExplicitlyDeleted, String comment) {
+        this.personId = personId;
+        this.companyId = companyId;
+        this.creationDate = creationDate;
+        this.deletionDate = deletionDate;
+        this.ratio = ratio;
+        this.isExplicitlyDeleted = isExplicitlyDeleted;
+        this.comment = comment;
     }
 
     public void scaleRatio(double sum) {

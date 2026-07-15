@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Random;
 import ldbc.finbench.datagen.entities.edges.PersonInvestCompany;
 import ldbc.finbench.datagen.entities.nodes.Company;
+import ldbc.finbench.datagen.entities.nodes.InvestorInfo;
 import ldbc.finbench.datagen.entities.nodes.Person;
 import ldbc.finbench.datagen.generation.DatagenParams;
 import ldbc.finbench.datagen.util.RandomGeneratorFarm;
@@ -40,7 +41,7 @@ public class PersonInvestEvent implements Serializable {
     }
 
     public List<Company> personInvestPartition(Person[] investors, List<Company> targets) {
-        int investorsize = investors.length;
+        int investorSize = investors.length;
         Random numInvestorsRand = randomFarm.get(RandomGeneratorFarm.Aspect.NUMS_PERSON_INVEST);
         Random chooseInvestorRand = randomFarm.get(RandomGeneratorFarm.Aspect.CHOOSE_PERSON_INVESTOR);
         for (Company target : targets) {
@@ -48,8 +49,29 @@ public class PersonInvestEvent implements Serializable {
                 DatagenParams.maxInvestors - DatagenParams.minInvestors + 1
             ) + DatagenParams.minInvestors;
             for (int i = 0; i < numInvestors; i++) {
-                int index = chooseInvestorRand.nextInt(investorsize);
+                int index = chooseInvestorRand.nextInt(investorSize);
                 Person investor = investors[index];
+                if (cannotInvest(investor, target)) {
+                    continue;
+                }
+                PersonInvestCompany.createPersonInvestCompany(randomFarm, investor, target);
+            }
+        }
+        return targets;
+    }
+
+    // Lightweight overload accepting InvestorInfo[] instead of Person[]
+    public List<Company> personInvestPartition(InvestorInfo[] investors, List<Company> targets) {
+        int investorSize = investors.length;
+        Random numInvestorsRand = randomFarm.get(RandomGeneratorFarm.Aspect.NUMS_PERSON_INVEST);
+        Random chooseInvestorRand = randomFarm.get(RandomGeneratorFarm.Aspect.CHOOSE_PERSON_INVESTOR);
+        for (Company target : targets) {
+            int numInvestors = numInvestorsRand.nextInt(
+                DatagenParams.maxInvestors - DatagenParams.minInvestors + 1
+            ) + DatagenParams.minInvestors;
+            for (int i = 0; i < numInvestors; i++) {
+                int index = chooseInvestorRand.nextInt(investorSize);
+                InvestorInfo investor = investors[index];
                 if (cannotInvest(investor, target)) {
                     continue;
                 }
@@ -61,5 +83,10 @@ public class PersonInvestEvent implements Serializable {
 
     public boolean cannotInvest(Person investor, Company target) {
         return target.hasInvestedBy(investor);
+    }
+
+    // Lightweight check using id instead of Person object
+    public boolean cannotInvest(InvestorInfo investor, Company target) {
+        return target.hasInvestedByPersonId(investor.getId());
     }
 }

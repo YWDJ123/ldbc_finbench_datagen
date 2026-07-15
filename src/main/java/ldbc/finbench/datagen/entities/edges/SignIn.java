@@ -20,6 +20,7 @@ import java.io.Serializable;
 import ldbc.finbench.datagen.entities.DynamicActivity;
 import ldbc.finbench.datagen.entities.nodes.Account;
 import ldbc.finbench.datagen.entities.nodes.Medium;
+import ldbc.finbench.datagen.entities.nodes.SignInTargetInfo;
 import ldbc.finbench.datagen.generation.dictionary.Dictionaries;
 import ldbc.finbench.datagen.util.RandomGeneratorFarm;
 
@@ -63,6 +64,40 @@ public class SignIn implements DynamicActivity, Serializable {
 
         medium.getSignIns().add(signIn);
         account.getSignIns().add(signIn);
+    }
+
+    // Lightweight overload accepting SignInTargetInfo instead of full Account object
+    public static void createSignIn(RandomGeneratorFarm farm, int mid, Medium medium, SignInTargetInfo account) {
+        long creationDate =
+            Dictionaries.dates.randomMediumToAccountDate(farm.get(RandomGeneratorFarm.Aspect.SIGNIN_DATE), medium,
+                                                         account, account.getDeletionDate());
+        String comment =
+            Dictionaries.randomTexts.getUniformDistRandomTextForComments(
+                farm.get(RandomGeneratorFarm.Aspect.COMMON_COMMENT));
+        SignIn signIn = new SignIn(medium, account, mid, creationDate, account.getDeletionDate(),
+                                   account.isExplicitlyDeleted(), comment);
+        // Set country and city
+        int countryId =
+            Dictionaries.places.getCountryForPerson(farm.get(RandomGeneratorFarm.Aspect.SIGNIN_COUNTRY));
+        signIn.setCountryId(countryId);
+        signIn.setCityId(
+            Dictionaries.places.getRandomCity(farm.get(RandomGeneratorFarm.Aspect.SIGNIN_CITY), countryId));
+
+        medium.getSignIns().add(signIn);
+        // Note: we don't add to account.getSignIns() because SignInTargetInfo is lightweight
+        // and account signIns are never serialized in the output
+    }
+
+    // Constructor for lightweight SignInTargetInfo
+    private SignIn(Medium medium, SignInTargetInfo account, int mid, long creationDate, long deletionDate,
+                   boolean isExplicitlyDeleted, String comment) {
+        this.mediumId = medium.getMediumId();
+        this.accountId = account.getAccountId();
+        this.multiplicityId = mid;
+        this.creationDate = creationDate;
+        this.deletionDate = deletionDate;
+        this.isExplicitlyDeleted = isExplicitlyDeleted;
+        this.comment = comment;
     }
 
     public long getMediumId() {

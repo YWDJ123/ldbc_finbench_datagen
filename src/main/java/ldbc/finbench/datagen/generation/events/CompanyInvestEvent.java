@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Random;
 import ldbc.finbench.datagen.entities.edges.CompanyInvestCompany;
 import ldbc.finbench.datagen.entities.nodes.Company;
+import ldbc.finbench.datagen.entities.nodes.InvestorInfo;
 import ldbc.finbench.datagen.generation.DatagenParams;
 import ldbc.finbench.datagen.util.RandomGeneratorFarm;
 
@@ -58,7 +59,33 @@ public class CompanyInvestEvent implements Serializable {
         return targets;
     }
 
+    // Lightweight overload accepting InvestorInfo[] instead of Company[]
+    public List<Company> companyInvestPartition(InvestorInfo[] investors, List<Company> targets) {
+        int investorsize = investors.length;
+        Random numInvestorsRand = randomFarm.get(RandomGeneratorFarm.Aspect.NUMS_COMPANY_INVEST);
+        Random chooseInvestorRand = randomFarm.get(RandomGeneratorFarm.Aspect.CHOOSE_COMPANY_INVESTOR);
+        for (Company target : targets) {
+            int numInvestors = numInvestorsRand.nextInt(
+                DatagenParams.maxInvestors - DatagenParams.minInvestors + 1
+            ) + DatagenParams.minInvestors;
+            for (int i = 0; i < numInvestors; i++) {
+                int index = chooseInvestorRand.nextInt(investorsize);
+                InvestorInfo investor = investors[index];
+                if (cannotInvest(investor, target)) {
+                    continue;
+                }
+                CompanyInvestCompany.createCompanyInvestCompany(randomFarm, investor, target);
+            }
+        }
+        return targets;
+    }
+
     public boolean cannotInvest(Company investor, Company target) {
         return (investor == target) || investor.hasInvestedBy(target) || target.hasInvestedBy(investor);
+    }
+
+    // Lightweight check using ids instead of Company objects
+    public boolean cannotInvest(InvestorInfo investor, Company target) {
+        return (investor.getId() == target.getCompanyId()) || target.hasInvestedByCompanyId(investor.getId());
     }
 }

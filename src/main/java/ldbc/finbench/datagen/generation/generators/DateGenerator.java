@@ -21,9 +21,11 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import ldbc.finbench.datagen.entities.nodes.Account;
 import ldbc.finbench.datagen.entities.nodes.Company;
+import ldbc.finbench.datagen.entities.nodes.InvestorInfo;
 import ldbc.finbench.datagen.entities.nodes.Loan;
 import ldbc.finbench.datagen.entities.nodes.Medium;
 import ldbc.finbench.datagen.entities.nodes.Person;
+import ldbc.finbench.datagen.entities.nodes.SignInTargetInfo;
 import ldbc.finbench.datagen.generation.DatagenParams;
 import ldbc.finbench.datagen.generation.distribution.PowerLawActivityDeleteDistribution;
 import ldbc.finbench.datagen.generation.distribution.TimeDistribution;
@@ -110,13 +112,31 @@ public class DateGenerator {
         return randomDate(random, fromDate, simulationEnd);
     }
 
+    // Lightweight overloads for InvestorInfo (used in invest events)
+    public long randomPersonToCompanyDate(Random random, InvestorInfo person, Company company) {
+        long fromDate = Math.max(person.getCreationDate(), company.getCreationDate()) + DatagenParams.activityDelta;
+        return randomDate(random, fromDate, simulationEnd);
+    }
+
     public long randomCompanyToCompanyDate(Random random, Company fromCompany, Company toCompany) {
         long fromDate =
             Math.max(fromCompany.getCreationDate(), toCompany.getCreationDate()) + DatagenParams.activityDelta;
         return randomDate(random, fromDate, simulationEnd);
     }
 
+    public long randomCompanyToCompanyDate(Random random, InvestorInfo fromCompany, InvestorInfo toCompany) {
+        long fromDate =
+            Math.max(fromCompany.getCreationDate(), toCompany.getCreationDate()) + DatagenParams.activityDelta;
+        return randomDate(random, fromDate, simulationEnd);
+    }
+
     public long randomMediumToAccountDate(Random random, Medium medium, Account account, long deletionDate) {
+        long fromDate = Math.max(medium.getCreationDate(), account.getCreationDate()) + DatagenParams.activityDelta;
+        return randomDate(random, fromDate, Math.min(deletionDate, simulationEnd));
+    }
+
+    // Lightweight overload for SignInTargetInfo
+    public long randomMediumToAccountDate(Random random, Medium medium, SignInTargetInfo account, long deletionDate) {
         long fromDate = Math.max(medium.getCreationDate(), account.getCreationDate()) + DatagenParams.activityDelta;
         return randomDate(random, fromDate, Math.min(deletionDate, simulationEnd));
     }
@@ -162,8 +182,20 @@ public class DateGenerator {
         return randomDate(random, fromDate, Math.min(deletionDate, simulationEnd));
     }
 
+    // Lightweight overload for loan sub-events using primitives instead of Account objects
+    public long randomLoanToAccountDate(Random random, Loan loan, long accountCreationDate, long deletionDate) {
+        long fromDate = Math.max(loan.getCreationDate(), accountCreationDate) + DatagenParams.activityDelta;
+        return randomDate(random, fromDate, Math.min(deletionDate, simulationEnd));
+    }
+
     public long randomAccountToLoanDate(Random random, Account account, Loan loan, long deletionDate) {
         long fromDate = Math.max(account.getCreationDate(), loan.getCreationDate()) + DatagenParams.activityDelta;
+        return randomDate(random, fromDate, Math.min(deletionDate, simulationEnd));
+    }
+
+    public long randomAccountToLoanDate(Random random, long accountCreationDate, long loanCreationDate,
+                                        long deletionDate) {
+        long fromDate = Math.max(accountCreationDate, loanCreationDate) + DatagenParams.activityDelta;
         return randomDate(random, fromDate, Math.min(deletionDate, simulationEnd));
     }
 
