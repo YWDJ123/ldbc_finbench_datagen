@@ -45,19 +45,6 @@ public class CompanyInvestCompany implements DynamicActivity, Serializable {
         this.comment = comment;
     }
 
-    public static void createCompanyInvestCompany(RandomGeneratorFarm farm,
-                                                  Company investor, Company target) {
-        Random dateRandom = farm.get(RandomGeneratorFarm.Aspect.COMPANY_INVEST_DATE);
-        long creationDate = Dictionaries.dates.randomCompanyToCompanyDate(dateRandom, investor, target);
-        double ratio = farm.get(RandomGeneratorFarm.Aspect.INVEST_RATIO).nextDouble();
-        String comment =
-            Dictionaries.randomTexts.getUniformDistRandomTextForComments(
-                farm.get(RandomGeneratorFarm.Aspect.COMMON_COMMENT));
-        CompanyInvestCompany companyInvestCompany =
-            new CompanyInvestCompany(investor, target, creationDate, 0, ratio, false, comment);
-        target.getCompanyInvestCompanies().add(companyInvestCompany);
-    }
-
     // Lightweight overload accepting InvestorInfo instead of full Company objects
     public static void createCompanyInvestCompany(RandomGeneratorFarm farm,
                                                   InvestorInfo investor, Company target) {

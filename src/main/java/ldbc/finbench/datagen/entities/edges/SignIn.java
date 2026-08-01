@@ -46,26 +46,6 @@ public class SignIn implements DynamicActivity, Serializable {
         this.comment = comment;
     }
 
-    public static void createSignIn(RandomGeneratorFarm farm, int mid, Medium medium, Account account) {
-        long creationDate =
-            Dictionaries.dates.randomMediumToAccountDate(farm.get(RandomGeneratorFarm.Aspect.SIGNIN_DATE), medium,
-                                                         account, account.getDeletionDate());
-        String comment =
-            Dictionaries.randomTexts.getUniformDistRandomTextForComments(
-                farm.get(RandomGeneratorFarm.Aspect.COMMON_COMMENT));
-        SignIn signIn = new SignIn(medium, account, mid, creationDate, account.getDeletionDate(),
-                                   account.isExplicitlyDeleted(), comment);
-        // Set country and city
-        int countryId =
-            Dictionaries.places.getCountryForPerson(farm.get(RandomGeneratorFarm.Aspect.SIGNIN_COUNTRY));
-        signIn.setCountryId(countryId);
-        signIn.setCityId(
-            Dictionaries.places.getRandomCity(farm.get(RandomGeneratorFarm.Aspect.SIGNIN_CITY), countryId));
-
-        medium.getSignIns().add(signIn);
-        account.getSignIns().add(signIn);
-    }
-
     // Lightweight overload accepting SignInTargetInfo instead of full Account object
     public static void createSignIn(RandomGeneratorFarm farm, int mid, Medium medium, SignInTargetInfo account) {
         long creationDate =

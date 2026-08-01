@@ -107,11 +107,6 @@ public class DateGenerator {
         return randomDate(random, creationDate, simulationEnd);
     }
 
-    public long randomPersonToCompanyDate(Random random, Person person, Company company) {
-        long fromDate = Math.max(person.getCreationDate(), company.getCreationDate()) + DatagenParams.activityDelta;
-        return randomDate(random, fromDate, simulationEnd);
-    }
-
     // Lightweight overloads for InvestorInfo (used in invest events)
     public long randomPersonToCompanyDate(Random random, InvestorInfo person, Company company) {
         long fromDate = Math.max(person.getCreationDate(), company.getCreationDate()) + DatagenParams.activityDelta;
@@ -128,11 +123,6 @@ public class DateGenerator {
         long fromDate =
             Math.max(fromCompany.getCreationDate(), toCompany.getCreationDate()) + DatagenParams.activityDelta;
         return randomDate(random, fromDate, simulationEnd);
-    }
-
-    public long randomMediumToAccountDate(Random random, Medium medium, Account account, long deletionDate) {
-        long fromDate = Math.max(medium.getCreationDate(), account.getCreationDate()) + DatagenParams.activityDelta;
-        return randomDate(random, fromDate, Math.min(deletionDate, simulationEnd));
     }
 
     // Lightweight overload for SignInTargetInfo
