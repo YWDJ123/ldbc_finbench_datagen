@@ -27,6 +27,9 @@ final class ActivityIdGenerator {
     private static final int BLOCK_SHIFT = LOCAL_ID_BITS;
     private static final int BUCKET_SHIFT = BLOCK_BITS + LOCAL_ID_BITS;
     private static final long PERSON_MASK = 1L << 62;
+    private static final long POSITIVE_MASK = Long.MAX_VALUE;
+    private static final long MIX_MULTIPLIER_1 = 0x7fb5d329728ea185L;
+    private static final long MIX_MULTIPLIER_2 = 0x81dadef4bc2dd44dL;
 
     private ActivityIdGenerator() {
     }
@@ -45,7 +48,18 @@ final class ActivityIdGenerator {
             throw new IllegalArgumentException("Unsupported owner type: " + ownerType);
         }
 
-        return ownerMask | (bucket << BUCKET_SHIFT) | ((long) blockId << BLOCK_SHIFT) | localId;
+        long rawId = ownerMask | (bucket << BUCKET_SHIFT) | ((long) blockId << BLOCK_SHIFT) | localId;
+        return mixPositive(rawId);
+    }
+
+    private static long mixPositive(long value) {
+        long mixed = value & POSITIVE_MASK;
+        mixed ^= mixed >>> 31;
+        mixed = (mixed * MIX_MULTIPLIER_1) & POSITIVE_MASK;
+        mixed ^= mixed >>> 27;
+        mixed = (mixed * MIX_MULTIPLIER_2) & POSITIVE_MASK;
+        mixed ^= mixed >>> 33;
+        return mixed & POSITIVE_MASK;
     }
 
     private static void checkRange(String name, long value, long maxValue) {
