@@ -23,6 +23,7 @@ import ldbc.finbench.datagen.generation.serializers.ActivitySerializer
 import ldbc.finbench.datagen.io.Writer
 import ldbc.finbench.datagen.io.raw.RawSink
 import ldbc.finbench.datagen.util.Logging
+import org.apache.spark.HashPartitioner
 import org.apache.spark.TaskContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
@@ -94,8 +95,12 @@ class ActivitySimulator(sink: RawSink)(implicit spark: SparkSession)
       persons.flatMap(_.getAccount.asScala)
     val companyAccounts =
       companies.flatMap(_.getAccount.asScala)
-    personAccounts
-      .union(companyAccounts)
+    val merged = personAccounts.union(companyAccounts)
+
+    merged
+      .keyBy(a => a.getAccountId)
+      .repartitionAndSortWithinPartitions(new HashPartitioner(merged.getNumPartitions))
+      .values
       .mapPartitions { iter =>
         val accounts = iter.toArray
         shuffleDegrees(accounts)
