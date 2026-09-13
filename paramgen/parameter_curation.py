@@ -34,8 +34,8 @@ import time_select
 # Config
 # ---------------------------------------------------------------------------
 
-TABLE_DIR = sys.argv[1]
-OUT_DIR   = sys.argv[2]
+TABLE_DIR = None
+OUT_DIR   = None
 random.seed(42)
 
 TRUNCATION_LIMIT = 500
@@ -55,10 +55,12 @@ INNER_WORKERS = 3
 # ---------------------------------------------------------------------------
 
 def factor_path(*parts):
-    return os.path.join(TABLE_DIR, *parts)
+    """Path inside TABLE_DIR."""
+    return os.path.join(TABLE_DIR or os.environ['PARAMGEN_TABLE_DIR'], *parts)
 
 def output_path(filename):
-    return os.path.join(OUT_DIR, filename)
+    """Path inside OUT_DIR."""
+    return os.path.join(OUT_DIR or os.environ['PARAMGEN_OUT_DIR'], filename)
 
 
 # ---------------------------------------------------------------------------
@@ -1721,6 +1723,10 @@ def _safe_loc(df, key, col, default):
 
 
 def _process_get_neighbors(chunk, account_df):
+    if not isinstance(chunk, pd.DataFrame):
+        chunk = pd.DataFrame(chunk)
+    if chunk.empty:
+        return chunk
     col = chunk.columns[1]
     chunk[col] = chunk[col].apply(
         lambda x: _find_neighbors(x, account_df)
@@ -1782,6 +1788,12 @@ TASK_ORDER = [
 
 
 def main():
+    global TABLE_DIR, OUT_DIR
+    TABLE_DIR = sys.argv[1]
+    OUT_DIR   = sys.argv[2]
+    os.environ['PARAMGEN_TABLE_DIR'] = TABLE_DIR
+    os.environ['PARAMGEN_OUT_DIR']   = OUT_DIR
+
     multiprocessing.set_start_method('forkserver')
     max_tasks = MAX_CONCURRENT_TASKS
     pending = list(TASK_ORDER)
