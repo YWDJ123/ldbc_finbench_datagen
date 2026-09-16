@@ -17,6 +17,7 @@
 package ldbc.finbench.datagen.entities.edges;
 
 import java.io.Serializable;
+import java.lang.Math;
 import ldbc.finbench.datagen.entities.DynamicActivity;
 import ldbc.finbench.datagen.entities.nodes.Account;
 import ldbc.finbench.datagen.entities.nodes.Loan;
@@ -51,9 +52,18 @@ public class Deposit implements DynamicActivity, Serializable {
     }
 
     public static void createDeposit(RandomGeneratorFarm farm, Loan loan, Account account, double amount) {
+        createDeposit(farm, loan, account, amount, Long.MAX_VALUE);
+    }
+
+    // Sub-event date is additionally bounded by the loan's own lifetime: deleting any account
+    // linked to the loan (Write17 cascade) removes the loan node, so no sub-event of the loan
+    // may be scheduled at or after that deletion time.
+    public static void createDeposit(RandomGeneratorFarm farm, Loan loan, Account account, double amount,
+                                     long loanKillDate) {
         long creationDate =
             Dictionaries.dates.randomLoanToAccountDate(farm.get(RandomGeneratorFarm.Aspect.LOAN_SUBEVENTS_DATE), loan,
-                                                       account, account.getDeletionDate());
+                                                       account,
+                                                       Math.min(account.getDeletionDate(), loanKillDate));
         String comment =
             Dictionaries.randomTexts.getUniformDistRandomTextForComments(
                 farm.get(RandomGeneratorFarm.Aspect.COMMON_COMMENT));
@@ -68,7 +78,8 @@ public class Deposit implements DynamicActivity, Serializable {
     public static void createDeposit(RandomGeneratorFarm farm, Loan loan, LoanTargetAccount account, double amount) {
         long creationDate =
             Dictionaries.dates.randomLoanToAccountDate(farm.get(RandomGeneratorFarm.Aspect.LOAN_SUBEVENTS_DATE), loan,
-                                                       account.getCreationDate(), account.getDeletionDate());
+                                                       account.getCreationDate(),
+                                                       Math.min(account.getDeletionDate(), loan.getKillDate()));
         String comment =
             Dictionaries.randomTexts.getUniformDistRandomTextForComments(
                 farm.get(RandomGeneratorFarm.Aspect.COMMON_COMMENT));

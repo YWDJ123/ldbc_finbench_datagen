@@ -51,9 +51,12 @@ public class Repay implements DynamicActivity, Serializable {
     }
 
     public static void createRepay(RandomGeneratorFarm farm, Account account, Loan loan, double amount) {
+        // Sub-event date is additionally bounded by the loan's own lifetime: deleting any account
+        // linked to the loan (Write17 cascade) removes the loan node.
         long creationDate =
             Dictionaries.dates.randomAccountToLoanDate(farm.get(RandomGeneratorFarm.Aspect.LOAN_SUBEVENTS_DATE),
-                                                       account, loan, account.getDeletionDate());
+                                                       account, loan,
+                                                       Math.min(account.getDeletionDate(), loan.getKillDate()));
         String comment =
             Dictionaries.randomTexts.getUniformDistRandomTextForComments(
                 farm.get(RandomGeneratorFarm.Aspect.COMMON_COMMENT));
@@ -68,7 +71,7 @@ public class Repay implements DynamicActivity, Serializable {
         long creationDate =
             Dictionaries.dates.randomAccountToLoanDate(farm.get(RandomGeneratorFarm.Aspect.LOAN_SUBEVENTS_DATE),
                                                        account.getCreationDate(), loan.getCreationDate(),
-                                                       account.getDeletionDate());
+                                                       Math.min(account.getDeletionDate(), loan.getKillDate()));
         String comment =
             Dictionaries.randomTexts.getUniformDistRandomTextForComments(
                 farm.get(RandomGeneratorFarm.Aspect.COMMON_COMMENT));

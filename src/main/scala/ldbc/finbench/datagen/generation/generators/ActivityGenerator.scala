@@ -555,11 +555,21 @@ class ActivityGenerator(config: DatagenConfiguration)(implicit spark: SparkSessi
     mediumCreationDate + DatagenParams.activityDelta > account.getDeletionDate
 
   private def cannotDeposit(loan: Loan, account: Account): Boolean =
-    loan.getBalance == 0 || loan.getCreationDate + DatagenParams.activityDelta > account.getDeletionDate
+    loan.getBalance == 0 ||
+      eventWindowClosed(loan, account)
 
   private def cannotRepay(account: Account, loan: Loan): Boolean =
     loan.getLoanAmount == loan.getBalance ||
-      account.getDeletionDate < loan.getCreationDate + DatagenParams.activityDelta
+      eventWindowClosed(loan, account)
+
+  // The loan dies (Write17 cascades) when any explicitly-deleted account linked to it is removed,
+  // so the activity window must be closed at or before that time — and before the chosen account
+  // stops existing.
+  private def eventWindowClosed(loan: Loan, account: Account): Boolean = {
+    val upperDate = Math.min(account.getDeletionDate, loan.getKillDate)
+    val lowerDate = Math.max(loan.getCreationDate, account.getCreationDate) + DatagenParams.activityDelta
+    loan.getCreationDate + DatagenParams.activityDelta > upperDate || lowerDate >= upperDate
+  }
 
   private def cannotTransfer(from: Account, to: LoanTargetAccount): Boolean =
     from.getDeletionDate < to.getCreationDate + DatagenParams.activityDelta ||

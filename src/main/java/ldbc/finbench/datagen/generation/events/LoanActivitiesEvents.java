@@ -186,13 +186,24 @@ public class LoanActivitiesEvents implements Serializable {
             || from.getCreationDate() + DatagenParams.activityDelta > to.getDeletionDate();
     }
 
+    // Deleting any explicitly-deleted account linked to the loan (Write17 cascade) removes the loan,
+    // so activity windows must close before that time.
     public boolean cannotDeposit(Loan from, Account to) {
-        return from.getBalance() == 0 || from.getCreationDate() + DatagenParams.activityDelta > to.getDeletionDate();
+        long upperDate = Math.min(to.getDeletionDate(), from.getKillDate());
+        long lowerDate =
+            Math.max(from.getCreationDate(), to.getCreationDate()) + DatagenParams.activityDelta;
+        return from.getBalance() == 0
+               || from.getCreationDate() + DatagenParams.activityDelta > upperDate
+               || lowerDate >= upperDate;
     }
 
     public boolean cannotRepay(Account from, Loan to) {
+        long upperDate = Math.min(from.getDeletionDate(), to.getKillDate());
+        long lowerDate =
+            Math.max(from.getCreationDate(), to.getCreationDate()) + DatagenParams.activityDelta;
         return to.getLoanAmount() == to.getBalance()
-            || from.getDeletionDate() < to.getCreationDate() + DatagenParams.activityDelta;
+               || to.getCreationDate() + DatagenParams.activityDelta > upperDate
+               || lowerDate >= upperDate;
     }
 
     private Account getAccount(Loan loan) {

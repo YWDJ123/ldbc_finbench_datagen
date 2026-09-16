@@ -36,6 +36,7 @@ public class Loan implements Serializable, Comparable<Loan> {
     private long personId;
     private long companyId;
     private Account[] accounts;
+    private long killDate = Long.MAX_VALUE;
     private final List<Deposit> deposits;
     private final List<Repay> repays;
     private final List<Transfer> loanTransfers;
@@ -169,6 +170,19 @@ public class Loan implements Serializable, Comparable<Loan> {
 
     public void setAccounts(Account[] accounts) {
         this.accounts = accounts;
+        this.killDate = Long.MAX_VALUE;
+        if (accounts != null) {
+            for (Account account : accounts) {
+                if (account.isExplicitlyDeleted() && account.getDeletionDate() > 0
+                    && account.getDeletionDate() < this.killDate) {
+                    this.killDate = account.getDeletionDate();
+                }
+            }
+        }
+    }
+
+    public long getKillDate() {
+        return killDate;
     }
 
     public String getUsage() {
