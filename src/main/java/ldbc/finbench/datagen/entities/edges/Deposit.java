@@ -52,7 +52,7 @@ public class Deposit implements DynamicActivity, Serializable {
     }
 
     public static void createDeposit(RandomGeneratorFarm farm, Loan loan, Account account, double amount) {
-        createDeposit(farm, loan, account, amount, Long.MAX_VALUE);
+        createDeposit(farm, loan, account, amount, loan.getKillDate());
     }
 
     // Sub-event date is additionally bounded by the loan's own lifetime: deleting any account
